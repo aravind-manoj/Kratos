@@ -49,10 +49,12 @@ class PentestOrchestrator:
     live_state: LiveState,
     default_image: str = "ubuntu:latest",
     max_iterations: int = 50,
+    provider: str | None = None,
   ):
     self.live_state = live_state
     self.default_image = default_image
     self.max_iterations = max_iterations
+    self.provider = provider
     self.subagents: dict[str, SubAgent] = {}
     self.stop_event = threading.Event()
     self._original_sigint = None
@@ -79,6 +81,7 @@ class PentestOrchestrator:
       subagents=self.subagents,
       stop_event=self.stop_event,
       default_image=self.default_image,
+      provider=self.provider,
     )
 
     target_str = ", ".join(targets)

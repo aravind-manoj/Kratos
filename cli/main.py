@@ -1,4 +1,3 @@
-import os
 import webbrowser
 from pathlib import Path
 from typing import Optional
@@ -8,6 +7,7 @@ from dotenv import load_dotenv
 from rich.console import Console
 from rich.panel import Panel
 
+from cli.core.llm import LLMProviderError, resolve_provider
 from cli.core.live_state import LiveState
 from cli.orchestrator import PentestOrchestrator
 from cli.output import print_summary, write_json
@@ -36,9 +36,20 @@ Options:
   --port INTEGER             Live dashboard port (default: 8765)
   --no-browser               Do not auto-open the dashboard in a browser
   --no-ui                    Headless mode — skip the web dashboard
+  --provider TEXT            LLM provider: openai, anthropic, google,
+                             openrouter, groq (auto-detects from env if omitted)
 
 Environment:
-  GROQ_API_KEY               Required. Set in .env or your shell environment.
+  LLM_PROVIDER               Force provider when multiple API keys are set
+  LLM_MAIN_MODEL             Override coordinator model
+  LLM_SUB_MODEL              Override sub-agent model
+  OPENAI_API_KEY             OpenAI API key
+  ANTHROPIC_API_KEY          Anthropic API key
+  GOOGLE_API_KEY             Google AI Studio / Gemini API key
+  GEMINI_API_KEY             Alias for Google AI Studio key
+  OPENROUTER_API_KEY         OpenRouter API key
+  OPENROUTER_BASE_URL        OpenRouter API base (default: openrouter.ai/api/v1)
+  GROQ_API_KEY               Groq API key
 
 Examples:
   kratos scan 192.168.1.1
@@ -81,6 +92,11 @@ def scan(
   port: int = typer.Option(8765, "--port", help="Live dashboard port"),
   no_browser: bool = typer.Option(False, "--no-browser", help="Don't auto-open browser"),
   no_ui: bool = typer.Option(False, "--no-ui", help="Headless mode — no web dashboard"),
+  provider: Optional[str] = typer.Option(
+    None,
+    "--provider",
+    help="LLM provider: openai, anthropic, google, openrouter, groq (auto-detects from env if omitted)",
+  ),
 ):
   """Run an autonomous pentest against the given target(s).
 
@@ -91,11 +107,14 @@ def scan(
   sub-agent terminals. Use --no-ui for headless runs or --no-browser to skip
   opening a browser tab.
   """
-  if not os.getenv("GROQ_API_KEY"):
-    console.print("[red]GROQ_API_KEY is not set. Copy .env.example to .env and add your key.[/red]")
+  try:
+    selected_provider = resolve_provider(provider)
+  except LLMProviderError as e:
+    console.print(f"[red]{e}[/red]")
     raise typer.Exit(1)
 
   console.print(Panel(AUTHORIZATION_WARNING.strip(), border_style="red"))
+  console.print(f"[dim]LLM provider:[/dim] {selected_provider}\n")
   target_list = []
   for t in targets:
     target_list.extend([x.strip() for x in t.split(",") if x.strip()])
@@ -128,6 +147,7 @@ def scan(
     live_state=live_state,
     default_image=image,
     max_iterations=max_iterations,
+    provider=selected_provider,
   )
 
   try:

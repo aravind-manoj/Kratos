@@ -110,6 +110,7 @@ class SubAgent:
     task: str,
     live_state: LiveState,
     image: str = "ubuntu:latest",
+    provider: str | None = None,
   ):
     self.id = subagent_id
     self.task = task
@@ -138,7 +139,7 @@ class SubAgent:
       "stop_event": self.stop_event,
     }
     self.loop = ReactLoop(
-      create_sub_llm(),
+      create_sub_llm(provider),
       self._build_tools(),
       SUB_AGENT_PROMPT,
       agent_id=subagent_id,

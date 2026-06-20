@@ -18,14 +18,16 @@ class MainAgent:
     subagents: dict[str, SubAgent],
     stop_event: threading.Event,
     default_image: str = "ubuntu:latest",
+    provider: str | None = None,
   ):
     self.live_state = live_state
     self.subagents = subagents
     self.stop_event = stop_event
     self.default_image = default_image
+    self.provider = provider
     self.finalized_payload: dict | None = None
     self.loop = ReactLoop(
-      create_main_llm(),
+      create_main_llm(provider),
       self._build_tools(),
       MAIN_AGENT_PROMPT,
       agent_id="main",
@@ -43,7 +45,7 @@ class MainAgent:
       """Create a new sub-agent with its own Docker container for a specific task."""
       try:
         subagent_id = f"subagent-{uuid4()}"
-        sub = SubAgent(subagent_id, task, live_state, image=image)
+        sub = SubAgent(subagent_id, task, live_state, image=image, provider=agent.provider)
         sub.start()
         subagents[subagent_id] = sub
         return f"Sub-agent '{subagent_id}' created and started.\nTask:\n{task}"

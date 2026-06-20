@@ -9,14 +9,14 @@ Kratos is a standalone CLI rewrite inspired by the concept of [hacker-ai](https:
 - Python 3.13+
 - [uv](https://docs.astral.sh/uv/)
 - Docker Desktop / Docker daemon running
-- Groq API key
+- An LLM API key (Groq, OpenAI, Anthropic, or Google AI Studio)
 
 ## Setup
 
 ```bash
 cd cli
 cp .env.example .env
-# Edit .env and set GROQ_API_KEY
+# Edit .env and set an API key for your chosen provider
 uv sync
 ```
 
@@ -37,7 +37,26 @@ uv run kratos scan 192.168.1.1 --no-ui -o findings.json
 
 # Custom dashboard port
 uv run kratos scan example.com --port 9000 --no-browser
+
+# Pick LLM provider explicitly
+uv run kratos scan 192.168.1.1 --provider openai
+uv run kratos scan 192.168.1.1 --provider anthropic
+uv run kratos scan 192.168.1.1 --provider openrouter
 ```
+
+## LLM providers
+
+Kratos auto-detects the provider from your environment. Set **one** API key, or set `LLM_PROVIDER` / `--provider` when multiple keys are present. Auto-detect priority: **openai → anthropic → google → openrouter → groq**.
+
+| Provider | Env key(s) | Default models (main / sub) |
+|----------|------------|-----------------------------|
+| `openai` | `OPENAI_API_KEY` | gpt-5-mini / gpt-5.5 (1M context) |
+| `anthropic` | `ANTHROPIC_API_KEY` | claude-haiku-4-5 / claude-sonnet-4-6 |
+| `google` | `GOOGLE_API_KEY` or `GEMINI_API_KEY` | gemini-3.1-flash-lite / gemini-3.1-pro-preview |
+| `openrouter` | `OPENROUTER_API_KEY` | claude-sonnet-4.6 / claude-opus-4.6 (1M context, cyber-focused) |
+| `groq` | `GROQ_API_KEY` | openai/gpt-oss-20b / openai/gpt-oss-120b |
+
+Override models with `LLM_MAIN_MODEL` and `LLM_SUB_MODEL`.
 
 ## Live Dashboard
 
