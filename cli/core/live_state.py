@@ -1,8 +1,10 @@
+import logging
 import threading
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Callable
 
+log = logging.getLogger("kratos.live_state")
 
 @dataclass
 class SubAgentSnapshot:
@@ -47,8 +49,8 @@ class LiveState:
     for listener in listeners:
       try:
         listener(event)
-      except Exception:
-        pass
+      except Exception as e:
+        log.warning("LiveState listener failed: %s", e)
 
   def init_scan(self, targets: list[str], vectors: list[str], note: str) -> None:
     with self._lock:
@@ -100,7 +102,9 @@ class LiveState:
   def update_buffer(self, subagent_id: str, buffer: str) -> None:
     with self._lock:
       sub = self._subagents.get(subagent_id)
-      if not sub or sub.buffer == buffer:
+      if not sub:
+        return
+      if sub.buffer == buffer:
         return
       sub.buffer = buffer
     self._emit({"type": "terminal_update", "subagent_id": subagent_id, "buffer": buffer})

@@ -1,12 +1,10 @@
 import webbrowser
 from pathlib import Path
 from typing import Optional
-
 import typer
 from dotenv import load_dotenv
 from rich.console import Console
 from rich.panel import Panel
-
 from cli.core.llm import LLMProviderError, resolve_provider
 from cli.core.live_state import LiveState
 from cli.orchestrator import PentestOrchestrator
@@ -132,7 +130,7 @@ def scan(
     dashboard = DashboardServer(live_state, port=port)
     try:
       dashboard.start()
-    except OSError as e:
+    except (OSError, TimeoutError) as e:
       console.print(f"[red]Could not start dashboard on port {port}: {e}[/red]")
       raise typer.Exit(1)
 

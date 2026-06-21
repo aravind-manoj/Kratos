@@ -1,15 +1,12 @@
 import threading
 from uuid import uuid4
-
 from langchain_core.tools import tool
-
 from cli.core.live_state import LiveState
 from cli.core.llm import create_main_llm
 from cli.core.logger import log_info
 from cli.core.prompts import MAIN_AGENT_PROMPT
 from cli.core.react_loop import ReactLoop
 from cli.core.sub_agent import SubAgent, format_subagent_report
-
 
 class MainAgent:
   def __init__(

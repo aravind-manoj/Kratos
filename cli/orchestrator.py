@@ -3,7 +3,6 @@ import threading
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
-
 from cli.core.live_state import LiveState
 from cli.core.logger import log_error, log_info, log_warn
 from cli.core.main_agent import MainAgent
@@ -125,7 +124,7 @@ class PentestOrchestrator:
           log_error(f"Error during iteration {iteration}: {e}", agent_id="main")
           nudge = f"An error occurred: {e}. Please continue your assessment."
 
-        self.stop_event.wait(5.0)
+        self.stop_event.wait(1.0)
 
       if not main_agent.finalized and status == "completed":
         status = "max_iterations"

@@ -1,16 +1,12 @@
 import threading
 from dataclasses import dataclass
-
 from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
-
 from cli.core.context_manager import ContextManager
 from cli.core.logger import log_info, log_error
-
 
 @dataclass
 class TurnResult:
   stopped: bool = False
-
 
 class ReactLoop:
   MAX_TOOL_ROUNDS = 20

@@ -1,9 +1,7 @@
 import queue
 import threading
-
 from langchain_core.messages import HumanMessage
 from langchain_core.tools import tool
-
 from cli.core.docker_controller import Controller
 from cli.core.live_state import LiveState
 from cli.core.llm import create_sub_llm
@@ -185,7 +183,7 @@ class SubAgent:
       return result
 
     @tool("wait_for_output")
-    def wait_for_output(seconds: int = 10) -> str:
+    def wait_for_output(seconds: int = 5) -> str:
       """Wait before reading terminal again when output hasn't changed."""
       seconds = max(5, min(60, seconds))
       log_info(f"Waiting {seconds}s for output", agent_id=ctx["subagent_id"])
@@ -286,7 +284,7 @@ class SubAgent:
           if pending
           else "Continue your task. If done, use `report_to_main`."
         )
-        self.stop_event.wait(2.0)
+        self.stop_event.wait(0.5)
 
       if self.state["status"] == "running" and not self.stop_event.is_set():
         self.state["status"] = "stopped"

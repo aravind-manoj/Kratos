@@ -1,13 +1,15 @@
+import re
 import socket
 import threading
 import time
 from typing import Callable
-
 import docker
 import pyte
-
 from cli.core.logger import log_error, log_info
 
+TTY_COLS = 160
+TTY_ROWS = 80
+_CONTROL_CHARS = re.compile(r"[\x00-\x08\x0b-\x1f\x7f]")
 
 class Controller:
   def __init__(
@@ -26,7 +28,9 @@ class Controller:
     self.running = False
     self.on_buffer_update = on_buffer_update
     self._last_pushed_length = 0
-    self._pyte_screen = pyte.Screen(200, 50)
+    self._last_emitted_parsed: str | None = None
+    self._exec_id: str | None = None
+    self._pyte_screen = pyte.Screen(TTY_COLS, TTY_ROWS)
     self._pyte_stream = pyte.Stream(self._pyte_screen)
 
   def start(self):
@@ -45,10 +49,12 @@ class Controller:
     exec_create = self.client.api.exec_create(
       self.container.id, cmd="/bin/bash", stdin=True, tty=True
     )
+    self._exec_id = exec_create["Id"]
 
     self.sock = self.client.api.exec_start(
-      exec_create["Id"], detach=False, tty=True, socket=True
+      self._exec_id, detach=False, tty=True, socket=True
     )
+    self.client.api.exec_resize(self._exec_id, height=TTY_ROWS, width=TTY_COLS)
 
     self.running = True
     threading.Thread(target=self._read_stream, daemon=True).start()
@@ -72,25 +78,32 @@ class Controller:
   def _sync_live(self):
     while self.running:
       parsed = ""
-      needs_update = False
+      should_push = False
       with self.lock:
-        if len(self.buffer) > self._last_pushed_length:
+        if len(self.buffer) != self._last_pushed_length:
           parsed = self._parse_buffer(self.buffer)
           self._last_pushed_length = len(self.buffer)
-          needs_update = True
+          should_push = True
 
-      if needs_update and self.on_buffer_update:
-        try:
-          self.on_buffer_update(parsed)
-        except Exception as e:
-          log_error(f"Buffer callback failed: {e}", agent_id=self.tag)
+      if (should_push and self.on_buffer_update):
+        if parsed != self._last_emitted_parsed:
+          self._last_emitted_parsed = parsed
+          try:
+            self.on_buffer_update(parsed)
+          except Exception as e:
+            log_error(f"Buffer callback failed: {e}", agent_id=self.tag)
 
-      time.sleep(0.5)
+      time.sleep(0.05)
 
   def _parse_buffer(self, buffer: str) -> str:
     self._pyte_screen.reset()
     self._pyte_stream.feed(buffer)
-    return "\n".join(line.rstrip() for line in self._pyte_screen.display).strip()
+    lines: list[str] = []
+    for row in self._pyte_screen.display:
+      line = "".join(row).rstrip()
+      if line:
+        lines.append(line)
+    return _CONTROL_CHARS.sub("", "\n".join(lines))
 
   def get_screen(self, last_chars: int = 2000) -> str:
     with self.lock:

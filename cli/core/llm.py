@@ -1,7 +1,6 @@
 import os
 from dataclasses import dataclass
 from typing import Literal
-
 from langchain_core.language_models.chat_models import BaseChatModel
 
 Role = Literal["main", "sub"]
