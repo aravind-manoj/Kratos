@@ -15,6 +15,7 @@ from fastapi.responses import FileResponse
 from cli.core.live_state import LiveState
 
 STATIC_DIR = Path(__file__).parent / "static"
+ASSETS_DIR = Path(__file__).parent / "assets"
 log = logging.getLogger("kratos.dashboard")
 MAX_PENDING_EVENTS = 200
 
@@ -94,6 +95,10 @@ def create_app(
   @app.get("/health")
   async def health():
     return {"status": "ok"}
+
+  @app.get("/assets/logo.png")
+  async def logo():
+    return FileResponse(ASSETS_DIR / "logo.png", media_type="image/png")
 
   @app.websocket("/ws")
   async def websocket_endpoint(websocket: WebSocket):

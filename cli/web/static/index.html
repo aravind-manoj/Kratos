@@ -35,6 +35,24 @@
       font-weight: 600;
     }
 
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-logo {
+      height: 3.5rem;
+      width: auto;
+      display: block;
+    }
+
+    .brand-text {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+
     .meta {
       font-size: 0.75rem;
       color: #71717a;
@@ -179,9 +197,12 @@
 
 <body>
   <header>
-    <div>
-      <h1>Kratos Attack Dashboard</h1>
-      <div class="meta" id="scan-meta">Waiting for scan data...</div>
+    <div class="brand">
+      <img class="brand-logo" src="/assets/logo.png" alt="Kratos logo" />
+      <div class="brand-text">
+        <h1>Live Attack Monitor</h1>
+        <div class="meta" id="scan-meta">Waiting for scan data...</div>
+      </div>
     </div>
     <div>
       <span id="scan-status" class="badge badge-starting">—</span>
